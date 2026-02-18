@@ -1,32 +1,21 @@
-import { Suspense } from "react";
-import { getAllTasks } from "@/lib/queries";
-import { TaskFilters } from "@/components/tasks/task-filters";
-import { TaskListClient } from "@/components/tasks/task-list-client";
-interface PageProps {
-  searchParams: Promise<{ search?: string; status?: string; priority?: string }>;
-}
+import { getTasks } from "@/actions/tasks";
+import { TaskViews } from "@/components/task-views";
+import { seed } from "@/lib/seed";
 
-export default async function Home({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const tasks = getAllTasks({
-    search: params.search,
-    status: params.status,
-    priority: params.priority,
-  });
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  seed();
+  const tasks = await getTasks({});
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-        <p className="mt-1 text-muted-foreground">Manage and track your work</p>
-      </div>
-
-      <div className="space-y-4">
-        <Suspense fallback={<div>Loading filters...</div>}>
-          <TaskFilters />
-        </Suspense>
-
-        <TaskListClient tasks={tasks} />
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
+          <p className="text-muted-foreground mt-1">Manage your work efficiently</p>
+        </div>
+        <TaskViews initialTasks={tasks} />
       </div>
     </main>
   );
