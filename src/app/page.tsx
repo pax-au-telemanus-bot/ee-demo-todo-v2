@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import { getAllTasks } from "@/lib/queries";
 import { TaskFilters } from "@/components/tasks/task-filters";
 import { TaskListClient } from "@/components/tasks/task-list-client";
-import type { TaskStatus, TaskPriority } from "@/lib/types";
-
 interface PageProps {
   searchParams: Promise<{ search?: string; status?: string; priority?: string }>;
 }
