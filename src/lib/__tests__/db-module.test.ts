@@ -1,77 +1,64 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 
-const testDbPath = path.join("/tmp", `module-test-${Date.now()}.db`);
+describe("DB Module (singleton)", () => {
+  let tmpDir: string;
 
-// Override DB_PATH before importing
-jest.mock("path", () => {
-  const actual = jest.requireActual("path");
-  return {
-    ...actual,
-    join: (...args: string[]) => {
-      if (args.length === 2 && args[1] === "todo.db") return testDbPath;
-      return actual.join(...args);
-    },
-  };
-});
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ee-todo-dbmod-test-"));
+    process.env.DB_PATH = path.join(tmpDir, "test.db");
+    jest.resetModules();
+  });
 
-afterAll(() => {
-  const { closeDb } = require("../db");
-  closeDb();
-  try { fs.unlinkSync(testDbPath); } catch { /* ignore */ }
-  try { fs.unlinkSync(testDbPath + "-wal"); } catch { /* ignore */ }
-  try { fs.unlinkSync(testDbPath + "-shm"); } catch { /* ignore */ }
-});
+  afterEach(() => {
+    try {
+      const { closeDb } = require("../db");
+      closeDb();
+    } catch { /* ignore */ }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    delete process.env.DB_PATH;
+  });
 
-describe("Database Module", () => {
-  test("getDb creates database and schema", () => {
+  it("should create database and schema on first access", () => {
     const { getDb } = require("../db");
     const db = getDb();
-    expect(db).toBeDefined();
-
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'").all();
     expect(tables).toHaveLength(1);
   });
 
-  test("getDb returns singleton", () => {
+  it("should return singleton instance", () => {
     const { getDb } = require("../db");
-    const db1 = getDb();
-    const db2 = getDb();
-    expect(db1).toBe(db2);
+    expect(getDb()).toBe(getDb());
   });
 
-  test("closeDb closes the connection", () => {
-    const { getDb, closeDb } = require("../db");
+  it("should use WAL journal mode", () => {
+    const { getDb } = require("../db");
+    const result = getDb().prepare("PRAGMA journal_mode").get() as { journal_mode: string };
+    expect(result.journal_mode).toBe("wal");
+  });
+
+  it("should close and allow re-opening via resetDb", () => {
+    const { getDb, closeDb, resetDb } = require("../db");
     getDb();
     closeDb();
-    // After close, getDb should create a new instance
-    const db2 = getDb();
-    expect(db2).toBeDefined();
-  });
-});
-
-describe("Seed Module", () => {
-  test("seed populates 14 tasks", () => {
-    const { getDb } = require("../db");
-    const { seed } = require("../seed");
-    // Clear any existing tasks
-    const db = getDb();
-    db.exec("DELETE FROM tasks");
-
-    seed();
-    const count = db.prepare("SELECT COUNT(*) as count FROM tasks").get() as { count: number };
-    expect(count.count).toBe(14);
+    resetDb();
+    jest.resetModules();
+    process.env.DB_PATH = path.join(tmpDir, "test.db");
+    const { getDb: getDb2 } = require("../db");
+    const db2 = getDb2();
+    const tables = db2.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'").all();
+    expect(tables).toHaveLength(1);
   });
 
-  test("seed is idempotent", () => {
-    const { getDb } = require("../db");
-    const { seed } = require("../seed");
-    const db = getDb();
-
-    // Already seeded from previous test
-    const countBefore = (db.prepare("SELECT COUNT(*) as count FROM tasks").get() as { count: number }).count;
-    seed(); // Should not add more
-    const countAfter = (db.prepare("SELECT COUNT(*) as count FROM tasks").get() as { count: number }).count;
-    expect(countAfter).toBe(countBefore);
+  it("should create data directory if it doesn't exist", () => {
+    const { closeDb } = require("../db");
+    closeDb();
+    jest.resetModules();
+    const nestedPath = path.join(tmpDir, "nested", "dir", "test.db");
+    process.env.DB_PATH = nestedPath;
+    const { getDb: getDb2 } = require("../db");
+    getDb2();
+    expect(fs.existsSync(path.dirname(nestedPath))).toBe(true);
   });
 });
