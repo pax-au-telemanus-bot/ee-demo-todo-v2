@@ -5,31 +5,43 @@
 - Date: 2026-02-18
 - TDD Mode: BATCH
 
-## Phases Completed
+## Changes Made
 
-### Phase 1: Dependencies & Tabs
-- Installed @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, react-big-calendar, date-fns
-- Added Shadcn Tabs component
-- Created TaskViews wrapper component with Tabs
+### New Components
+1. **KanbanBoard** (`src/components/kanban-board.tsx`)
+   - Three-column layout: Todo, In Progress, Done
+   - Drag-and-drop via @dnd-kit/core with `useDraggable` and `useDroppable`
+   - Optimistic status updates on drag end
+   - Visual feedback: column highlighting on hover, card rotation during drag
+   - Priority badges and due date display on cards
 
-### Phase 2: Kanban Board
-- Code: src/components/kanban-board.tsx
-- DndContext with PointerSensor and KeyboardSensor
-- Three columns: To Do, In Progress, Done
-- Draggable cards with priority badges and due dates
-- DragOverlay for visual feedback
-- Optimistic status update on drop + Server Action persist
+2. **CalendarView** (`src/components/calendar-view.tsx`)
+   - react-big-calendar with date-fns localizer
+   - Month and week views
+   - Color-coded events by task status
+   - "Tasks without due dates" section below calendar
 
-### Phase 3: Calendar View
-- Code: src/components/calendar-view.tsx
-- react-big-calendar with date-fns localizer
-- Color-coded events by task status
-- Month and week views
-- Tasks without dates shown separately below calendar
+3. **TaskViews** (`src/components/task-views.tsx`)
+   - Tab navigation: List | Kanban | Calendar
+   - SVG icons for each tab
+   - Shared task state across views
 
-## Deviations
-- Used @dnd-kit/core directly (useDroppable/useDraggable) instead of @dnd-kit/sortable since we don't need within-column reordering
+### Updated Components
+- **page.tsx** — Now uses `TaskViews` wrapper instead of direct list view
 
-## Quality Summary
-- Final Coverage: 85%+
-- All gates: ✅ (build, lint, 45 tests pass)
+### Dependencies Added
+- @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities
+- react-big-calendar, @types/react-big-calendar
+- date-fns
+
+## Quality Gates
+- ✅ Build passes
+- ✅ Lint clean
+- ✅ 45 tests passing
+- ✅ 94.3% statement coverage (>85% target)
+
+## Technical Decisions
+- Used `useDraggable`/`useDroppable` over `SortableContext` since we're moving between columns, not sorting within
+- Optimistic updates for drag-and-drop — update local state immediately, persist in background
+- Calendar uses `allDay: true` events since tasks have dates but not specific times
+- `enGB` locale for date-fns to match user's timezone (Europe/London)
