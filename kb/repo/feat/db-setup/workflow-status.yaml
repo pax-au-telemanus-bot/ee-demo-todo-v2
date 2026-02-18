@@ -51,3 +51,9 @@ phases:
       p3: 2
     artifacts:
       - review.md
+  document:
+    status: complete
+    started_at: "2026-02-18T15:05:00Z"
+    completed_at: "2026-02-18T15:06:00Z"
+    artifacts:
+      - solution.md
