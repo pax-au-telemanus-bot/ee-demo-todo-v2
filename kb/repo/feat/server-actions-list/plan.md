@@ -6,82 +6,102 @@
 - Detail Level: STANDARD
 
 ## Problem Statement
-Users need to view, create, edit, and delete tasks through a polished UI. The database exists but there's no interface to interact with it.
+Users need to view, create, edit, and delete tasks through a polished UI. The database layer exists but there's no interaction layer or visual interface.
+
+- Who: All users of the demo app
+- Current: Database with seed data, placeholder page
+- Desired: Full CRUD via Server Actions, polished list view with filters
+- Impact: Core application functionality
 
 ## User Stories
 
-### Epic: Task Management UI
+### Epic: Task CRUD Operations
 
-#### Story 1: CRUD Server Actions
+#### Story 1: View Tasks
 **As a** user
-**I want** to create, read, update, and delete tasks
-**So that** I can manage my work
+**I want** to see all tasks in a organized list
+**So that** I can understand what needs to be done
 
 Acceptance Criteria:
-- [ ] Given valid input, when creating a task, then it's persisted and the list refreshes
-- [ ] Given a task exists, when updating it, then changes are saved
-- [ ] Given a task exists, when deleting it, then it's removed
+- [ ] Tasks displayed in a table with title, status, priority, due date
+- [ ] Status shown as colored badges (todo=gray, in-progress=blue, done=green)
+- [ ] Priority shown as colored badges (high=red, medium=yellow, low=gray)
+- [ ] Due dates formatted human-readable, overdue dates highlighted
 
-#### Story 2: Task List View
+#### Story 2: Filter Tasks
 **As a** user
-**I want** to see all tasks in a polished table/list
-**So that** I can overview my work at a glance
-
-Acceptance Criteria:
-- [ ] Given tasks exist, when viewing the page, then all tasks display with status badges and priority indicators
-- [ ] Given the list view, when viewing a task, then I see title, description, status, priority, and due date
-
-#### Story 3: Filters
-**As a** user
-**I want** to filter tasks by status, priority, due date range, and text search
+**I want** to filter tasks by status, priority, and search text
 **So that** I can find specific tasks quickly
 
 Acceptance Criteria:
-- [ ] Given tasks exist, when filtering by status, then only matching tasks show
-- [ ] Given tasks exist, when searching by text, then matching titles/descriptions show
-- [ ] Given tasks exist, when filtering by priority, then only matching tasks show
+- [ ] Text search filters by title and description
+- [ ] Status dropdown filters by todo/in-progress/done/all
+- [ ] Priority dropdown filters by high/medium/low/all
+- [ ] Filters work in combination
+- [ ] URL reflects filter state (query params)
+
+#### Story 3: Create Tasks
+**As a** user
+**I want** to create new tasks
+**So that** I can track new work
+
+Acceptance Criteria:
+- [ ] "New Task" button opens a dialog/modal
+- [ ] Form fields: title (required), description, status, priority, due date
+- [ ] Validation: title required, min 2 chars
+- [ ] After creation, list refreshes showing new task
+
+#### Story 4: Edit Tasks
+**As a** user
+**I want** to edit existing tasks
+**So that** I can update task details
+
+Acceptance Criteria:
+- [ ] Click task row or edit button opens edit dialog
+- [ ] Pre-populated form with current values
+- [ ] After save, list refreshes with updated data
+
+#### Story 5: Delete Tasks
+**As a** user
+**I want** to delete tasks
+**So that** I can remove completed or irrelevant work
+
+Acceptance Criteria:
+- [ ] Delete button on each task with confirmation
+- [ ] After deletion, list refreshes
 
 ## Approach
-1. Set up Shadcn UI with required components
-2. Create Server Actions for CRUD in src/actions/tasks.ts
-3. Build TaskList client component with filters
-4. Build Create/Edit task dialog
-5. Wire everything together on the main page
+1. Initialize Shadcn UI
+2. Create Server Actions (CRUD) in src/actions/tasks.ts
+3. Create task queries in src/lib/queries.ts (server-side data fetching)
+4. Build list view components (TaskTable, TaskFilters, TaskDialog)
+5. Wire up with revalidatePath for live updates
 
 ## Tasks
 
-### Phase 1: Shadcn Setup & Server Actions
-| # | Task | Story | Estimate | Notes |
-|---|------|-------|----------|-------|
-| 1 | Initialize Shadcn UI | All | S | npx shadcn init |
-| 2 | Add required components | All | S | button, table, input, select, badge, dialog, textarea |
-| 3 | Create CRUD server actions | Story 1 | M | getTasks, createTask, updateTask, deleteTask |
+### Phase 1: Setup & Data Layer (S)
+| # | Task | Estimate |
+|---|------|----------|
+| 1 | Initialize Shadcn UI | S |
+| 2 | Create queries module (getAllTasks, getTaskById) | S |
+| 3 | Create Server Actions (create, update, delete) | S |
 
-### Phase 2: UI Components
-| # | Task | Story | Estimate | Notes |
-|---|------|-------|----------|-------|
-| 4 | TaskList component with table | Story 2 | M | Polished table with badges |
-| 5 | Filter bar component | Story 3 | M | Status, priority, date range, search |
-| 6 | Create/Edit task dialog | Story 1 | M | Form with validation |
-| 7 | Main page integration | All | S | Wire components together |
-
-## Acceptance Criteria (Feature-Level)
-- [ ] All CRUD operations working
-- [ ] Polished Apple-quality UI
-- [ ] Filters working for status, priority, date, text
-- [ ] Test coverage ≥ 85%
+### Phase 2: List View UI (M)
+| # | Task | Estimate |
+|---|------|----------|
+| 4 | Install Shadcn components (table, button, input, select, badge, dialog) | S |
+| 5 | Build TaskTable component | M |
+| 6 | Build TaskFilters component | M |
+| 7 | Build TaskDialog (create/edit) component | M |
+| 8 | Build DeleteConfirmation component | S |
+| 9 | Wire up page.tsx with all components | S |
 
 ## Test Strategy
-- **Unit**: Server actions (CRUD operations), filter logic
-- **Integration**: Full CRUD flow with database
-- **Coverage target**: 85%
+- **Unit**: Server Actions (create/update/delete), queries
+- **Integration**: Full CRUD flow via actions
+- **Component**: TaskTable rendering, filter behavior (if jest-dom configured for RSC)
 
 ## Risks
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Shadcn + Tailwind v4 compatibility | M | M | Use latest shadcn with v4 support |
-
-## Out of Scope
-- Kanban view (Phase 3)
-- Calendar view (Phase 3)
-- Drag and drop (Phase 3)
+- Shadcn init may need manual configuration for Tailwind v4
+- Server Actions testing requires mocking revalidatePath
+- Client/server component boundary management
